@@ -1,0 +1,10 @@
+certifi==2024.8.30
+charset-normalizer==3.3.2
+colorama==0.4.6                    rror
+idna==3.8                          info =============== 
+iniconfig==2.0.0                   reate_post_invalid_id
+packaging==24.1                    t not be created     
+pluggy==1.5.0                      s ==================
+pytest==8.3.3
+requests==2.32.3
+urllib3==2.2.2
