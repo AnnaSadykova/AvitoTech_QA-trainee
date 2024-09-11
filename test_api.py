@@ -34,7 +34,7 @@ def create_post():
     status_text = response_data.get("status", "") 
      
     # Извлекаем ID из строки статуса 
-    post_id = status_text.split()[-1]  # Предположим, что ID в конце строки 
+    post_id = status_text.split()[-1]
     return post_id 
 
 
