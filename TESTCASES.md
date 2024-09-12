@@ -1,192 +1,58 @@
-# Содержание
+## Тест-кейсы
+<br/>
 
-В файле приведен код двух файлов формата **.py** согласно **заданию 2**. В них содержатся коды автотестов.   
+Тест-кейсы написаны для проверки основного функционала (только с 1 негативным сценарием для поля sellerID, так как в описании задания 2 только к данному полю прописаны требования. Остальные негативные сценарии не указаны в тест-кейсе (так как более в задании 1 никаких требований к полям и прочее не указано), но на на них оформлены баг-репорты. В файле BUGS.md указаны также баги, которые были обнаружены путем тестирования через Postman, так как только там можно увидеть ответы на запросы (статус коды, JSON-объекты и т.д. Через автотестирование этого не видно.)
 
-# Positive test cases
+<br/>
 
-```python
+Поскольку в условии задания указано, что "Все тесты должны быть пройдены", то я написала негативные автотесты отдельно (на 2 бага, которые были обнаружены при прохождении тест-кейсов. Остальные баги были обнаружены через Postman вручную методом исследовательского тестирования (так как никаких требований, кроме требований к полю sellerID, не было указано в описании задания 2. ). 
 
-#В ходе тестирования был обнаружен баг (он указан в файле BUGS.md), который блокирует успешное прохождение теста: при отправке пары ключ-значение - "like": 35 (или любая другая цифра/число) в полученном объекте эта же пара меняется: ключ меняется на "likes", а значение меняется на 0. Для успешного прохождения теста было принято решение в POST-запросе не добавлять данную пару ключ-значение (ранее мной было также протестировано, что данная пара ключ-значение - необязательны).
+<br/>
 
-#Поскольку в условии задания указано, что "Все тесты должны быть пройдены", то я не писала негативные автотесты, которые в любом случае фэйлятся и таким образом не соотвествуют условию задания. 
+| ID: | 1 |
+|----------|----------|
+| Summary:  |  Создание объявления (вызов метода POST)  |
+| Author:    | Анна Садыкова   |
+| Preconditions:    | Headers request: Content-Type: application/json |
+| Environment:    | Windows 10 Pro (x64) |
+| Test data:    | В теле запроса (выбрать raw): { "name": "Телефон", "price": 85566, "sellerId": 111112, "statistics": { "contacts": 32, "like": 35, "viewCount": 14 } } <br/> URL: https://qa-internship.avito.com/api/1/item |
+| Steps to reproduce:    | 1. Инициировать вызов сервиса методом POST с телом. <br/> 2. Проверить код состояния. <br/>3. Проверить тело ответа от сервера. |
+| Expected result:   | 1. Запрос успешно отправлен на сервер. <br/> 2. Status: 200 OK <br/> 3. Тело ответа от сервера в формате JSON: {     "status": "Сохранили объявление - Уникальное ID" } |
 
-import requests
-import pytest
-
-BASE_URL = "https://qa-internship.avito.com/api/1"
-SELLER_ID = 111112
-
-PAYLOAD = { 
-        "name": "Телефон", 
-        "price": 85566, 
-        "sellerId": SELLER_ID, 
-        "statistics": { 
-            "contacts": 32,
-            "viewCount": 14 
-        } 
-    }
- 
-@pytest.fixture 
-def create_post(): 
-    url = f"{BASE_URL}/item" 
-    payload = PAYLOAD
-    headers = { 
-        'Content-Type': 'application/json' 
-    } 
-     
-    response = requests.post(url, json=payload, headers=headers) 
-    assert response.status_code == 200, "Post request failed" 
-     
-    # Получаем статус и ID нового объявления 
-    response_data = response.json() 
-    status_text = response_data.get("status", "") 
-     
-    # Извлекаем ID из строки статуса 
-    post_id = status_text.split()[-1]
-    return post_id 
+<br/>
 
 
-def test_create_post(create_post): 
-    # Проверяем, что ID возвращается и корректный 
-    assert create_post is not None 
-    assert len(create_post) > 0 
- 
- 
-def test_get_post_by_id(create_post): 
-    # Используем ID созданного поста для получения его через GET запрос 
-    post_id = create_post 
-    url = f"{BASE_URL}/item/{post_id}" 
-     
-    response = requests.get(url) 
-    assert response.status_code == 200, "Get request failed" 
-     
-    # Предположим, что ответ — это список объектов 
-    post_data_list = response.json() 
-    assert isinstance(post_data_list, list), "Response is not a list" 
-    assert len(post_data_list) > 0, "Post list is empty" 
-     
-    # Проверяем данные первого объекта в списке 
-    post_data = post_data_list[0] 
-     
-    assert post_data.get("id") == post_id, "ID does not match" 
-    assert post_data.get("name") == PAYLOAD["name"], "Name does not match" 
-    assert post_data.get("price") == PAYLOAD["price"], "Price does not match" 
-    assert post_data.get("sellerId") == SELLER_ID, "Seller ID does not match"
-    assert post_data.get("statistics").get("contacts") == PAYLOAD["statistics"]["contacts"], "Contacts does not match"
-    assert post_data.get("statistics").get("viewCount") == PAYLOAD["statistics"]["viewCount"], "ViewCount does not match"
 
-def test_get_items_by_seller():
-    url = f"{BASE_URL}/{SELLER_ID}/item"
+| ID: | 2 |
+|----------|----------|
+| Summary:  |  Получение объявления (вызов метода GET)  |
+| Author:    | Анна Садыкова   |
+| Preconditions:    | Params: Path Variables (Key: id, Value: уникальное id созданного ранее объявления через POST) |
+| Environment:    | Windows 10 Pro (x64) |
+| Test data:    | URL: https://qa-internship.avito.com/api/1/item/:id |
+| Steps to reproduce:    | 1. Инициировать вызов сервиса методом GET. <br/> 2. Проверить код состояния. <br/> 3. Проверить тело ответа от сервера. <br/> 4. Проверить структуру ответа. |
+| Expected result:   | 1. Запрос успешно отправлен на сервер. <br/> <br/> 2. Status: 200 OK <br/> <br/> 3. Проверить тело ответа от сервера: <br/> [ {  "createdAt": "год-месяц-день часы:минуты:секунды.милисекунды +смещение по часовому поясу +смещение по часовому поясу", <br/> "id": "уникальное id созданного ранее объявления через POST", <br/> "name": "Телефон", <br/> "price": 85566, <br/> "sellerId": 111112, <br/> "statistics": { "contacts": 32, "likes": 0, "viewCount": 14 } } ] <br/> <br/> 4. Схема JSON отображена корректно: <br/> <br/> - имена и типы полей соответствуют ожидаемым, включая вложенные объекты: "statistics": { "contacts": 32, "like": 35, "viewCount": 14 } <br/> <br/> - вложенная структура данных, включая объекты: {  "name": "Телефон", "price": 85566, "sellerId": 111112, "statistics": { "contacts": 32, "like": 35, "viewCount": 14 } } <br/> <br/> - значения полей соответствуют ожидаемым значениям из тестовых данных: <br/> "createdAt": "год-месяц-день часы:минуты:секунды.милисекунды +смещение по часовому поясу +смещение по часовому поясу" - string, <br/> "id": "уникальное id созданного ранее объявления через POST" - string, <br/> "name": "Телефон" - string, <br/>"price": 85566 - number, <br/> "sellerId": 111112 - number, <br/> "statistics": { "contacts": 32, "like": 35, "viewCount": 14} - object, <br/> "contacts": 32 - number, <br/> "like": 35 - number, <br/> "viewCount": 14 - number. | 
 
-    response = requests.get(url) 
-    assert response.status_code == 200, "Get request failed" 
+<br/>
 
-    post_data_list = response.json() 
-    assert isinstance(post_data_list, list), "Response is not a list" 
-    assert len(post_data_list) > 0, "Post list is empty" 
-```
+| ID: | 3 |
+|----------|----------|
+| Summary:  |  Получение всех объявлений по продавцу (вызов метода GET)  |
+| Author:    | Анна Садыкова   |
+| Preconditions:    | Params: Path Variables (Key: sellerID, Value: значение sellerId, указанное ранее в теле при вызове метода POST) |
+| Environment:    | Windows 10 Pro (x64) |
+| Test data:    | URL: https://qa-internship.avito.com/api/1/:sellerID/item  |
+| Steps to reproduce:    | 1. Инициировать вызов сервиса методом GET. <br/> 2. Проверить код состояния. <br/> 3. Проверить количество объектов в массиве в ответе от сервера. <br/> 4. Проверить структуру ответов. |
+| Expected result:   | 1. Запрос успешно отправлен на сервер. <br/> <br/> 2. Status: 200 OK <br/> <br/> 3. В ответе как минимум должен быть 1 объект (если 1 раз инициировали POST-запрос; количество инициализации POST-запросов == количеству объектов в ответе при инициализации метода GET на получение всех объявлений по продавцу). <br/> <br/> 4. Схема JSON отображена корректно: <br/> <br/> - имена и типы полей соответствуют ожидаемым, включая вложенные объекты: "statistics": { "contacts": 32, "like": 35, "viewCount": 14 } <br/> <br/> - вложенная структура данных, включая объекты: {  "name": "Телефон", "price": 85566, "sellerId": 111112, "statistics": { "contacts": 32, "like": 35, "viewCount": 14 } } <br/> <br/> - значения полей соответствуют ожидаемым значениям из тестовых данных: <br/> "createdAt": "год-месяц-день часы:минуты:секунды.милисекунды +смещение по часовому поясу +смещение по часовому поясу" - string, <br/> "id": "уникальное id созданного ранее объявления через POST" - string, <br/> "name": "Телефон" - string, <br/>"price": 85566 - number, <br/> "sellerId": 111112 - number, <br/> "statistics": { "contacts": 32, "like": 35, "viewCount": 14} - object, <br/> "contacts": 32 - number, <br/> "like": 35 - number, <br/> "viewCount": 14 - number. | 
 
-# Negative test cases
+<br/>
 
-```python
-
-import requests
-import pytest
- 
-BASE_URL = "https://qa-internship.avito.com/api/1"
-SELLER_ID_INVALID = 1
-SELLER_ID = 111112
-
-PAYLOAD_INVALID_ID = { 
-        "name": "Телефон", 
-        "price": 85566, 
-        "sellerId": SELLER_ID_INVALID, 
-        "statistics": { 
-            "contacts": 32, 
-            "like": 35, 
-            "viewCount": 14 
-        } 
-    }
-
-
-PAYLOAD = { 
-        "name": "Телефон", 
-        "price": 85566, 
-        "sellerId": SELLER_ID, 
-        "statistics": { 
-            "contacts": 32,
-            "like": 35,
-            "viewCount": 14 
-        } 
-    } 
-
-
-@pytest.fixture 
-def create_post_invalid_id(): 
-    url = f"{BASE_URL}/item" 
-    payload = PAYLOAD_INVALID_ID
-    headers = { 
-        'Content-Type': 'application/json' 
-    } 
-     
-    response = requests.post(url, json=payload, headers=headers) 
-    assert response.status_code == 200, "Post request failed" 
-     
-    # Получаем статус и ID нового объявления 
-    response_data = response.json() 
-    status_text = response_data.get("status", "") 
-     
-    # Извлекаем ID из строки статуса 
-    post_id = status_text.split()[-1]  # Предположим, что ID в конце строки 
-    return post_id 
-
-
-def test_create_post_invalid_id(create_post_invalid_id): 
-    # Проверяем, что если SELLER_ID > 999999 или SELLER_ID < 111111, то объявление не должно создаваться 
-    assert create_post_invalid_id is None, "Post request must not be created"
-
-
-@pytest.fixture 
-def create_post(): 
-    url = f"{BASE_URL}/item" 
-    payload = PAYLOAD
-    headers = { 
-        'Content-Type': 'application/json' 
-    } 
-     
-    response = requests.post(url, json=payload, headers=headers) 
-    assert response.status_code == 200, "Post request failed" 
-     
-    # Получаем статус и ID нового объявления 
-    response_data = response.json() 
-    status_text = response_data.get("status", "") 
-     
-    # Извлекаем ID из строки статуса 
-    post_id = status_text.split()[-1] 
-    return post_id 
-
-def test_get_post_by_id_error_in_like_field(create_post): 
-    # Используем ID созданного поста для получения его через GET запрос 
-    post_id = create_post 
-    url = f"{BASE_URL}/item/{post_id}" 
-     
-    response = requests.get(url) 
-    assert response.status_code == 200, "Get request failed" 
-     
-    # Предположим, что ответ — это список объектов 
-    post_data_list = response.json() 
-    assert isinstance(post_data_list, list), "Response is not a list" 
-    assert len(post_data_list) > 0, "Post list is empty" 
-     
-    # Проверяем данные первого объекта в списке 
-    post_data = post_data_list[0] 
-     
-    assert post_data.get("id") == post_id, "ID does not match" 
-    assert post_data.get("name") == PAYLOAD["name"], "Name does not match" 
-    assert post_data.get("price") == PAYLOAD["price"], "Price does not match" 
-    assert post_data.get("sellerId") == SELLER_ID, "Seller ID does not match"
-    assert post_data.get("statistics").get("contacts") == PAYLOAD["statistics"]["contacts"], "Contacts does not match"
-    assert post_data.get("statistics").get("like") == PAYLOAD["statistics"]["like"], "Like does not match"
-    assert post_data.get("statistics").get("viewCount") == PAYLOAD["statistics"]["viewCount"], "ViewCount does not match"
-
-```
+| ID: | 4 |
+|----------|----------|
+| Summary:  |  При sellerID > 999999 или sellerID < 111111 объявление не создается (вызов метода POST)  |
+| Author:    | Анна Садыкова   |
+| Preconditions:    | Headers request: Content-Type: application/json |
+| Environment:    | Windows 10 Pro (x64) |
+| Test data:    | В теле запроса (выбрать raw): { "name": "Телефон", "price": 85566, "sellerId": 1, "statistics": { "contacts": 32, "like": 35, "viewCount": 14 } } <br/> URL: https://qa-internship.avito.com/api/1/item |
+| Steps to reproduce:    | 1. Инициировать вызов сервиса методом POST с телом. <br/> 2. Проверить код состояния. <br/>3. Проверить тело ответа от сервера. |
+| Expected result:   | 1. Запрос не отправлен на сервер. <br/> 2. Status: 4xx ошибка на стороне клиента |<br/>
